@@ -95,6 +95,8 @@ def getComm(serial, address="00"):
     resp = sdpQuery("GCOM"+address+"\r", serial)
     return int(resp)
 
+## Memory commands
+
 def powerUpOutputEnable(state, preset, address="00"):
     """Enable/Disable output on power-up for a given preset"""
     """state: True/False = Enabled/Disabled"""
@@ -118,9 +120,15 @@ def getPresetSetting(preset='', voltage, current, address="00"):
     resp = sdpQuery("GETM"+address+"%1d\r"%preset, serial)
     return [int(resp[0:4])/100., int(resp[4:8])/1000., int(chr(resp[8]))]
 
-## Memory commands
-
-def 
+def setupProgramMemory(location, voltage, current, minutes, seconds):
+    """Setup a program memory location"""
+    """location - 0-19"""
+    """voltage, current - xx.xx"""
+    """minutes, seconds - whole numbers"""
+    loc = int(location)
+    vval = int(voltage*10)
+    cval = int(current*100)
+    sdpWrite("PROP"+address+"%2d%3d%03d%02d%02d\r"%loc%vval%cval%minutes%seconds, serial)
 
 
 def getAllLCDInfo(serial, address="00"):
