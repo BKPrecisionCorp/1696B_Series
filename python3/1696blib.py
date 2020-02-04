@@ -30,97 +30,107 @@ def sdpQuery(cmd, serial):
             resp.append(r)
     return resp[0]
 
-def curr(value, serial, address="00"):
+def curr(value, serial, address=0):
     """Set the current. Val is a number in normal format. i.e. 1.0 = 1.0 A"""
     val = int(value*100)
-    print(sdpWrite("CURR"+address+"%03d\r"%val, serial))
+    print(sdpWrite("CURR"+"%02d"%address+"%03d\r"%val, serial))
 
-def volt(value, serial, address="00"):
+def volt(value, serial, address=0):
     """Set the voltage. Val is a number in normal format. i.e. 1.0 = 1.0 V"""
     val = int(value*10)
-    print(sdpWrite("VOLT"+address+"%03d\r"%val, serial))
+    print(sdpWrite("VOLT"+"%02d"%address+"%03d\r"%val, serial))
 
-def output(state, serial, address="00"):
+def output(state, serial, address=0):
     """Enable/Disable the output. state - True = Enable, False = Disable"""
     if state == True:
-        sdpWrite("SOUT"+address+"0\r", serial)
+        sdpWrite("SOUT"+"%02d"%address+"0\r", serial)
     else:
-        sdpWrite("SOUT"+address+"1\r", serial)
+        sdpWrite("SOUT"+"%02d"%address+"1\r", serial)
 
-def getMaxVoltCurr(serial, address="00"):
+def getMaxVoltCurr(serial, address=0):
     """Get the maximum voltage and current from the supply. The response is an array: [0] = voltage, [1] = current"""
-    resp = sdpQuery("GMAX"+address+"\r", serial)
+    resp = sdpQuery("GMAX"+"%02d"%address+"\r", serial)
     return [int(resp[0:3])/10., int(resp[0][3:5])/10.]  
 
-def setOVP(value, serial, address="00"):
+def setOVP(value, serial, address=0):
     """Set the voltage. Val is a number in normal format. i.e. 1.0 = 1.0 V"""
     val = int(value*10)
-    print(sdpWrite("SOVP"+address+"%03d\r"%val, serial))
+    print(sdpWrite("SOVP"+"%02d"%address+"%03d\r"%val, serial))
     
-def getOVP(serial, address="00"):
+def getOVP(serial, address=0):
     """Get the Over Voltage Protection set point. Response is the value in volts."""
-    resp = sdpQuery("GOVP"+address+"\r", serial)
+    resp = sdpQuery("GOVP"+"%02d"%address+"\r", serial)
     print(resp)
     return int(resp)/10.  
 
-def getData(serial, address="00"):
+def getData(serial, address=0):
     """Get the current, voltage and state. Response is an array: [0] - Current, [1] - Voltage, [2] - state (0-cv, 1-cc)"""
-    resp = sdpQuery("GETD"+address+"\r", serial)
+    resp = sdpQuery("GETD"+"%02d"%address+"\r", serial)
     return [int(resp[0:4])/100., int(resp[4:8])/1000., int(chr(resp[8]))]
 
-def getSettings(serial, address="00"):
+def getSettings(serial, address=0):
     """Get the current, voltage and state. Response is an array: [0] - Current, [1] - Voltage"""
-    resp = sdpQuery("GETS"+address+"\r", serial)
+    resp = sdpQuery("GETS"+"%02d"%address+"\r", serial)
     return [int(resp[0:3])/10., int(resp[3:6])/100.]
 
-def remoteMode(state, address="00"):
+def remoteMode(state, address=0):
     """Enable or Disable Remote mode. Other commands over usb automatically set PS to remote"""
     """state - True/False = Enable/Disable"""
     if state == True:
-        sdpWrite("SESS"+address+"\r", serial)
+        sdpWrite("SESS"+"%02d"%address+"\r", serial)
     else:
-        sdpWrite("ENDS"+address+"\r", serial)
+        sdpWrite("ENDS"+"%02d"%address+"\r", serial)
 
-def setComm(rs485, commAddress, address="00"):
+def setComm(serial, commAddress, rs485=False, address=0):
     """Set comm mode and address"""
-    """rs485: True-rs485, False-USB/rs232"""
     """commAddress: 0-256"""
+    """rs485: True-rs485, False-USB/rs232, default=false"""
+    print(address)
     if rs485 == True:
-        sdpWrite("SESS"+address+"1%03d\r"%commAddress, serial)
+        sdpWrite("CCOM"+"%02d"%address+"1%03d\r"%commAddress, serial)
     else:
-        sdpWrite("SESS"+address+"0%03d\r"%commAddress, serial)
+        sdpWrite("CCOM"+"%02d"%address+"0%03d\r"%commAddress, serial)
 
-def getComm(serial, address="00"):
-    """Returns rs485 address"""
-    resp = sdpQuery("GCOM"+address+"\r", serial)
-    return int(resp)
+def getComm(serial, address=0):
+    """Get the comm settings"""
+    """Returns address """
+    resp = sdpQuery("GCOM"+"%02d"%address+"\r", serial)
+    return int(resp) 
 
-## Memory commands
+## Memory Preset Commands
 
-def powerUpOutputEnable(state, preset, address="00"):
+def powerUpOutputEnable(serial, state, preset, address=0):
     """Enable/Disable output on power-up for a given preset"""
     """state: True/False = Enabled/Disabled"""
     """preset: 0-9"""
     if state == True:
-        sdpWrite("POWW"+address+"%1d0\r"%preset, serial)
+        sdpWrite("POWW"+"%02d"%address+"%1d0\r"%preset, serial)
     else:
-        sdpWrite("POWW"+address+"%1d1\r"%preset, serial)
+        sdpWrite("POWW"+"%02d"%address+"%1d1\r"%preset, serial)
 
-def setPresetSetting(preset, voltage, current, address="00"):
+def setPresetSetting(serial, preset, voltage, current, address=0):
     """Configure a preset"""
     """preset: 1-9"""
-    vval = int(value*10)
-    cval = int(value*100)
-    sdpWrite("PROM"+address+"%1d%3d%03d\r"%preset%vval%cval, serial)
+    vval = int(voltage*10)
+    cval = int(current*100)
+    sdpWrite("PROM"+"%02d"%address+"%1d"%preset+"%03d"%vval+"%03d\r"%cval, serial)
     
     
-def getPresetSetting(preset='', voltage, current, address="00"):
+def getPresetSetting(serial, preset, address=0):
     """Get preset settings"""
     """ add more documentation... when I figure out how to write this func"""
-    resp = sdpQuery("GETM"+address+"%1d\r"%preset, serial)
-    return [int(resp[0:4])/100., int(resp[4:8])/1000., int(chr(resp[8]))]
+    resp = sdpQuery("GETM"+"%02d"%address+"%1d\r"%preset, serial)
+    print(resp)
+    return [int(resp[0:3])/10., int(resp[3:5])/10.]
 
-def setupProgramMemory(location, voltage, current, minutes, seconds):
+def loadPreset(serial, preset, address=0):
+    """Load a preset setting pair from memory"""
+    """preset: 1-9"""
+    sdpWrite("RUNM"+"%02d"%address+"%1d\r"%preset, serial)
+
+#Program Memory Commands
+
+def setupProgramMemory(serial, location, voltage, current, minutes, seconds):
     """Setup a program memory location"""
     """location - 0-19"""
     """voltage, current - xx.xx"""
@@ -128,14 +138,14 @@ def setupProgramMemory(location, voltage, current, minutes, seconds):
     loc = int(location)
     vval = int(voltage*10)
     cval = int(current*100)
-    sdpWrite("PROP"+address+"%2d%3d%03d%02d%02d\r"%loc%vval%cval%minutes%seconds, serial)
+#    sdpWrite("PROP"+"%02d"%address+"%2d"+"%3d"+"%03d"+"%02d"+"%02d\r"%loc%vval%cval%minutes%seconds, serial)
 
 
-def getAllLCDInfo(serial, address="00"):
+def getAllLCDInfo(serial, address=0):
     """Get all values from the LCD"""
     """Return is a dictionary of fields on the LCD"""
     """This is not fully validated - Jan-2020"""
-    resp = sdpQuery("GPAL"+address+"\r", serial)
+    resp = sdpQuery("GPAL"+"%02d"%address+"\r", serial)
     print(resp)
     print(resp.__len__())
     vals = {}
