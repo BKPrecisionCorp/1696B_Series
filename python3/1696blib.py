@@ -116,12 +116,14 @@ def setPresetSetting(serial, preset, voltage, current, address=0):
     sdpWrite("PROM"+"%02d"%address+"%1d"%preset+"%03d"%vval+"%03d\r"%cval, serial)
     
     
-def getPresetSetting(serial, preset, address=0):
+def getPresetSetting(serial, preset=1, address=0):
     """Get preset settings"""
-    """ add more documentation... when I figure out how to write this func"""
+    """preset: 1-9"""
+    """Returns Dictionary, 'voltage', 'current'"""
     resp = sdpQuery("GETM"+"%02d"%address+"%1d\r"%preset, serial)
     print(resp)
-    return [int(resp[0:3])/10., int(resp[3:5])/10.]
+    rval = {'voltage':int(resp[0:3])/10., 'current':int(resp[3:6])/100.}
+    return rval
 
 def loadPreset(serial, preset, address=0):
     """Load a preset setting pair from memory"""
@@ -130,7 +132,7 @@ def loadPreset(serial, preset, address=0):
 
 #Program Memory Commands
 
-def setupProgramMemory(serial, location, voltage, current, minutes, seconds):
+def setupProgramMemory(serial, location, voltage, current, minutes, seconds, address=0):
     """Setup a program memory location"""
     """location - 0-19"""
     """voltage, current - xx.xx"""
@@ -138,8 +140,22 @@ def setupProgramMemory(serial, location, voltage, current, minutes, seconds):
     loc = int(location)
     vval = int(voltage*10)
     cval = int(current*100)
-#    sdpWrite("PROP"+"%02d"%address+"%2d"+"%3d"+"%03d"+"%02d"+"%02d\r"%loc%vval%cval%minutes%seconds, serial)
+    sdpWrite("PROP"+"%02d"%address+"%2d"%loc+"%3d"%vval+"%03d"%cval+"%02d"%minutes+"%02d\r"%seconds, serial)
 
+def getProgramMemoryLocation(serial, location, address=0):
+    loc = int(location)
+    resp = sdpWrite("GETP"+"%02d"%address+"%2d\r"%loc, serial)
+    print(resp)
+    rval = {'voltage':int(resp[0:3])/10., 'current':int(resp[3:6])/100.}
+
+def runProgram(serial, times, address=0):
+    """Run the timed program:
+    (times) - the number of time to run the program, 0-256 (0 = infinite)"""
+    sdpWrite("RUNP"+"%02d"%address+"%03d\r"int(times))
+
+def stopProgram(serial, address=0):
+    """Stop a running program"""
+    sdpWrite("STOP"+"%02d\r"%address)
 
 def getAllLCDInfo(serial, address=0):
     """Get all values from the LCD"""
